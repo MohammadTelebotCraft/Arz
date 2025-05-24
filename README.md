@@ -1,12 +1,60 @@
-# ربات ارز - ArzBot
+<div align="center">
+  <h1 dir="rtl">🤖 ربات ارز | ArzBot 🌐</h1>
+  
+  <div dir="rtl">
+  <h3>ربات هوشمند تلگرام برای رصد لحظه‌ای نرخ ارز، ارزهای دیجیتال و طلا با قابلیت‌های مدیریتی پیشرفته</h3>
+  </div>
+  
+  <p align="center">
+    <img src="https://img.shields.io/badge/Version-1.0.0-brightgreen" alt="Version">
+    <img src="https://img.shields.io/badge/Python-3.8%2B-blue" alt="Python">
+    <img src="https://img.shields.io/badge/Telegram-Bot-2CA5E0" alt="Telegram Bot">
+    <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
+  </p>
 
-<div dir="rtl">
-ربات تلگرام برای رصد نرخ ارز، قیمت ارزهای دیجیتال و طلا با قابلیت‌های مدیریتی
+  <p align="center">
+    <a href="#-ویژگیها">ویژگی‌ها</a> •
+    <a href="#-نصب-و-راه‌اندازی">نصب</a> •
+    <a href="#-اجرای-ربات">اجرا</a> •
+    <a href="#-دستورات">دستورات</a> •
+    <a href="#-مشارکت">مشارکت</a>
+  </p>
+  
+  <p>A feature-rich, multi-language Telegram bot for tracking currency exchange rates, cryptocurrency prices, and gold rates with powerful admin capabilities.</p>
 </div>
 
-A feature-rich Telegram bot for tracking currency exchange rates, cryptocurrency prices, and gold rates with admin capabilities.
+---
 
-## 🌟 ویژگی‌ها | Features
+## ✨ ویژگی‌ها | Features
+
+<div align="center">
+  <img src="https://via.placeholder.com/800x400.png?text=ArzBot+Demo" alt="ArzBot Demo" width="80%"/>
+</div>
+
+<div dir="rtl" align="right">
+  <h3>📊 ویژگی‌های اصلی</h3>
+  <ul>
+    <li><b>نرخ لحظه‌ای ارزها</b> - رصد نرخ ارزهای اصلی و فرعی به صورت زنده</li>
+    <li><b>قیمت ارزهای دیجیتال</b> - پیگیری قیمت بیت‌کوین، اتریوم و سایر ارزها</li>
+    <li><b>قیمت طلا و سکه</b> - نمایش به‌روز قیمت طلا و سکه به همراه نمودار</li>
+    <li><b>پنل مدیریت پیشرفته</b> - مدیریت کامل تنظیمات و کاربران ربات</li>
+    <li><b>جستجوی اینلاین</b> - دسترسی سریع به نرخ‌ها در هر چت تلگرام</li>
+    <li><b>آمار و گزارش‌دهی</b> - رصد آمار استفاده و تحلیل عملکرد ربات</li>
+  </ul>
+</div>
+
+### 🌟 Key Features
+
+<div align="left">
+  <ul>
+    <li><b>Real-time Exchange Rates</b> - Track main and minor currency pairs live</li>
+    <li><b>Crypto Prices</b> - Monitor BTC, ETH, and other major cryptocurrencies</li>
+    <li><b>Gold & Coin Rates</b> - Updated precious metal prices with charts</li>
+    <li><b>Admin Dashboard</b> - Comprehensive bot and user management</li>
+    <li><b>Inline Queries</b> - Quick access to rates in any Telegram chat</li>
+    <li><b>Analytics</b> - Detailed usage statistics and reporting</li>
+  </ul>
+</div>
 
 <div dir="rtl">
 - **نرخ لحظه‌ای ارزها**: رصد نرخ ارزهای اصلی و فرعی
@@ -25,6 +73,10 @@ A feature-rich Telegram bot for tracking currency exchange rates, cryptocurrency
 - **User Statistics**: Track bot usage and user engagement
 
 ## 🚀 نصب و راه‌اندازی | Installation
+
+<div align="center">
+  <img src="https://via.placeholder.com/600x300.png?text=Installation+Guide" alt="Installation" width="70%"/>
+</div>
 
 <div dir="rtl">
 ### پیش‌نیازها | Prerequisites
@@ -116,6 +168,27 @@ A feature-rich Telegram bot for tracking currency exchange rates, cryptocurrency
 
 ## 🏃‍♂️ اجرای ربات | Running the Bot
 
+<div align="center">
+  <table>
+    <tr>
+      <th>عملیات</th>
+      <th>دستور</th>
+    </tr>
+    <tr>
+      <td>اجرای عادی</td>
+      <td><code>python main.py</code></td>
+    </tr>
+    <tr>
+      <td>اجرای با PM2</td>
+      <td><code>pm2 start main.py --name arzbot --interpreter python3</code></td>
+    </tr>
+    <tr>
+      <td>مشاهده لاگ‌ها</td>
+      <td><code>pm2 logs arzbot</code></td>
+    </tr>
+  </table>
+</div>
+
 <div dir="rtl">
 برای اجرای ربات، دستور زیر را در ترمینال وارد کنید:
 
@@ -150,7 +223,36 @@ pm2 save
 pm2 startup
 ```
 
-## 🛠 دستورات مدیریتی | Admin Commands
+## 🎛 دستورات مدیریتی | Admin Commands
+
+<div align="center">
+  <table>
+    <tr>
+      <th>دستور</th>
+      <th>توضیحات</th>
+      <th>Command</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td><code>/admin</code></td>
+      <td>دسترسی به پنل مدیریت</td>
+      <td><code>/admin</code></td>
+      <td>Access admin panel</td>
+    </tr>
+    <tr>
+      <td><code>/stats</code></td>
+      <td>مشاهده آمار ربات</td>
+      <td><code>/stats</code></td>
+      <td>View bot statistics</td>
+    </tr>
+    <tr>
+      <td><code>/broadcast</code></td>
+      <td>ارسال پیام به تمام کاربران</td>
+      <td><code>/broadcast</code></td>
+      <td>Send message to all users</td>
+    </tr>
+  </table>
+</div>
 
 <div dir="rtl">
 - `/admin` - دسترسی به پنل مدیریت
@@ -168,6 +270,35 @@ pm2 startup
 
 ## 🤖 دستورات کاربری | User Commands
 
+<div align="center">
+  <table>
+    <tr>
+      <th>دستور</th>
+      <th>توضیحات</th>
+      <th>Command</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td><code>/start</code></td>
+      <td>شروع کار با ربات</td>
+      <td><code>/start</code></td>
+      <td>Start the bot</td>
+    </tr>
+    <tr>
+      <td><code>/menu</code></td>
+      <td>نمایش منوی اصلی</td>
+      <td><code>/menu</code></td>
+      <td>Show main menu</td>
+    </tr>
+    <tr>
+      <td><code>/crypto</code></td>
+      <td>نمایش قیمت ارزهای دیجیتال</td>
+      <td><code>/crypto</code></td>
+      <td>Show cryptocurrency prices</td>
+    </tr>
+  </table>
+</div>
+
 <div dir="rtl">
 - `/start` - شروع کار با ربات
 - `/menu` - نمایش منوی اصلی
@@ -184,6 +315,31 @@ pm2 startup
 
 ## 📊 Supported Currencies
 
+<div align="center">
+  <table>
+    <tr>
+      <th>💵 ارزهای اصلی</th>
+      <th>💰 ارزهای دیجیتال</th>
+      <th>🏦 سایر ارزها</th>
+    </tr>
+    <tr>
+      <td>دلار آمریکا (USD)</td>
+      <td>بیت‌کوین (BTC)</td>
+      <td>یورو (EUR)</td>
+    </tr>
+    <tr>
+      <td>یورو (EUR)</td>
+      <td>اتریوم (ETH)</td>
+      <td>پوند (GBP)</td>
+    </tr>
+    <tr>
+      <td>ین ژاپن (JPY)</td>
+      <td>تتر (USDT)</td>
+      <td>فرانک سوئیس (CHF)</td>
+    </tr>
+  </table>
+</div>
+
 ### Main Currencies
 - USD (US Dollar)
 - EUR (Euro)
@@ -196,7 +352,47 @@ pm2 startup
 - USDT (Tether)
 - And many more...
 
-## 🔧 Configuration
+## 🤝 مشارکت | Contributing
+
+<div dir="rtl" align="right">
+  <p>ما از مشارکت‌های شما استقبال می‌کنیم! برای مشارکت در توسعه ربات:</p>
+  <ol>
+    <li>ریپوزیتوری را فورک کنید</li>
+    <li>شاخه جدیدی ایجاد کنید: <code>git checkout -b feature/feature-name</code></li>
+    <li>تغییرات خود را کامیت کنید: <code>git commit -m 'Add some feature'</code></li>
+    <li>به شاخه خود پوش کنید: <code>git push origin feature/feature-name</code></li>
+    <li>یک درخواست کشش (Pull Request) باز کنید</li>
+  </ol>
+</div>
+
+<p>For contributing to the project, please read <a href="CONTRIBUTING.md">CONTRIBUTING.md</a> for details on our code of conduct and the process for submitting pull requests.</p>
+
+## 📜 مجوز | License
+
+<div dir="rtl" align="center">
+  <p>این پروژه تحت مجوز MIT است - برای جزئیات به فایل <a href="LICENSE">LICENSE</a> مراجعه کنید.</p>
+</div>
+
+<p>This project is licensed under the MIT License - see the <a href="LICENSE">LICENSE</a> file for details.</p>
+
+## 🙏 تشکر | Acknowledgments
+
+<div dir="rtl" align="center">
+  <p>از تمامی عزیزانی که در توسعه این پروژه همکاری کردند صمیمانه تشکر می‌کنیم.</p>
+  <p>توسعه‌دهندگان اصلی:</p>
+  <ul>
+    <li><a href="#">نام شما</a></li>
+  </ul>
+</div>
+
+<p>Special thanks to all contributors who have helped make this project better.</p>
+
+---
+
+<div align="center">
+  <p>ساخته شده با ❤️ و ☕ توسط تیم توسعه‌دهندگان</p>
+  <p>Made with ❤️ and ☕ by the development team</p>
+</div>
 
 Edit `config.py` to customize:
 - Default currencies
