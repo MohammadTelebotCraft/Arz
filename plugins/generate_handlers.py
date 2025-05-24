@@ -1,8 +1,6 @@
 import os
 import json
 import re
-
-
 COMPREHENSIVE_CURRENCY_CONFIGS = [
     {'name': 'دلار', 'flag': '🇺🇸', 'triggers': ['Dollar', 'USD', 'Usd', 'dollar', 'usd', 'دلار', 'دلار آمریکا']},
     {'name': 'یورو', 'flag': '🇪🇺', 'triggers': ['EUR', 'Euro', 'Eur', 'euro', 'eur', 'یورو', 'یورو اروپا']},
@@ -179,42 +177,29 @@ COMPREHENSIVE_CURRENCY_CONFIGS = [
     {'name': 'دوبرا سائوتومه و پرنسیپ', 'flag': '🇸🇹', 'triggers': ['STN', 'São Tomé and Príncipe Dobra', 'Stn', 'dobra', 'são tomé and príncipe dobra', 'stn', 'دوبرا سائوتومه و پرنسیپ']},
     {'name': 'دلار کارائیب شرقی', 'flag': '🌴', 'triggers': ['East Caribbean Dollar', 'XCD', 'Xcd', 'east caribbean dollar', 'xcd', 'دلار کارائیب شرقی']}
 ]
-
-# Template for currency handler files
 TEMPLATE = '''from telethon import events
 from telethon.tl.custom import Button
 from .utils import format_number, format_change
-
-# Keywords that trigger this handler
 TRIGGERS = {triggers}
-
 async def handle_currency(event, client):
     """Handle {name} currency requests"""
     data = event.client.currency_data
     if not data:
         await event.respond('متاسفانه در حال حاضر امکان دریافت اطلاعات نرخ ارز وجود ندارد. ❌')
         return
-
-    # Try main currencies first
     currencies = data.get('mainCurrencies', {{}}).get('data', [])
     currency_info = next((c for c in currencies if c['currencyName'] == '{name}'), None)
-    
-    # If not found in main currencies, try minor currencies
     if not currency_info:
         currencies = data.get('minorCurrencies', {{}}).get('data', [])
         currency_info = next((c for c in currencies if c['currencyName'] == '{name}'), None)
-    
     if not currency_info:
         await event.respond('اطلاعات {name} در حال حاضر در دسترس نیست. ❌')
         return
-
     price = format_number(currency_info['livePrice'])
     change = format_change(currency_info['change'])
     lowest = format_number(currency_info['lowest'])
     highest = format_number(currency_info['highest'])
     time = currency_info['time']
-
-    # Create buttons for displaying information
     buttons = [
         [Button.inline("💰 قیمت فعلی", b'noop'), Button.inline(f"{{price}} تومان", b'noop')],
         [Button.inline("📊 تغییرات", b'noop'), Button.inline(f"{{change}}", b'noop')],
@@ -224,17 +209,14 @@ async def handle_currency(event, client):
         [Button.url("📢 کانال ما", "https://t.me/TelebotCraft")],
         [Button.url("➕ افزودن ربات به گروه", f"https://t.me/{{(await client.get_me()).username}}?startgroup=true")]
     ]
-
     message = f"{flag} نرخ لحظه‌ای {name}:"
     await event.respond(message, buttons=buttons)
 '''
-
 def make_filename(name):
     """Convert currency name to a valid filename"""
     filename = name.replace(' ', '_')
     filename = re.sub(r'[\/:*?"<>|]', '', filename)
     return f"{filename}.py"
-
 def generate_handlers():
     """Generate handler files for all currencies from generation_data.json"""
     try:
@@ -243,26 +225,18 @@ def generate_handlers():
     except Exception as e:
         print(f"Error loading generation_data.json: {e}")
         return
-
-    # Create a lookup map from the comprehensive config
     config_map = {item['name']: item for item in COMPREHENSIVE_CURRENCY_CONFIGS}
-
     currency_groups_to_process = []
     if 'mainCurrencies' in generation_data and 'data' in generation_data['mainCurrencies']:
         currency_groups_to_process.extend(generation_data['mainCurrencies']['data'])
     if 'minorCurrencies' in generation_data and 'data' in generation_data['minorCurrencies']:
         currency_groups_to_process.extend(generation_data['minorCurrencies']['data'])
-    
     if not currency_groups_to_process:
         print("No currency data found in generation_data.json to process.")
         return
-
     for item in currency_groups_to_process:
         currency_name = item['currencyName']
-        
-        # Get config from the comprehensive map
         currency_config = config_map.get(currency_name)
-        
         if not currency_config:
             print(f"Warning: No configuration found for '{currency_name}' in COMPREHENSIVE_CURRENCY_CONFIGS. Using defaults.")
             flag = '🌐'
@@ -270,12 +244,9 @@ def generate_handlers():
         else:
             flag = currency_config.get('flag', '🌐')
             triggers = currency_config.get('triggers', [currency_name])
-            # Ensure the currency name itself is always a trigger
             if currency_name not in triggers:
                 triggers.insert(0, currency_name)
-        
         filename = make_filename(currency_name)
-        
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 handler_code = TEMPLATE.format(
@@ -287,8 +258,6 @@ def generate_handlers():
             print(f"Generated handler for {currency_name}")
         except Exception as e:
             print(f"Error generating handler for {currency_name}: {e}")
-    
     print("Currency handlers generation complete!")
-
 if __name__ == '__main__':
-    generate_handlers() 
+    generate_handlers()

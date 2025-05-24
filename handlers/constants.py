@@ -1,10 +1,5 @@
-# Pagination
 ITEMS_PER_PAGE = 10
-
-# Base URL for currency charts - REPLACE WITH YOUR ACTUAL CHART URL
 BASE_CHART_URL = "https://example-chart-provider.com/chart/"
-
-# Currency flags
 CURRENCY_FLAGS = [
     {'name': 'دلار', 'flag': '🇺🇸', 'triggers': ['Dollar', 'USD', 'Usd', 'dollar', 'usd', 'دلار', 'دلار آمریکا']},
     {'name': 'یورو', 'flag': '🇪🇺', 'triggers': ['EUR', 'Euro', 'Eur', 'euro', 'eur', 'یورو', 'یورو اروپا']},
@@ -181,7 +176,5 @@ CURRENCY_FLAGS = [
     {'name': 'دوبرا سائوتومه و پرنسیپ', 'flag': '🇸🇹', 'triggers': ['STN', 'São Tomé and Príncipe Dobra', 'Stn', 'dobra', 'são tomé and príncipe dobra', 'stn', 'دوبرا سائوتومه و پرنسیپ']},
     {'name': 'دلار کارائیب شرقی', 'flag': '🌴', 'triggers': ['East Caribbean Dollar', 'XCD', 'Xcd', 'east caribbean dollar', 'xcd', 'دلار کارائیب شرقی']}
 ]
-
-# Channel info
 CHANNEL_USERNAME = "TelebotCraft"
-CHANNEL_LINK = f"https://t.me/{CHANNEL_USERNAME}" 
+CHANNEL_LINK = f"https://t.me/{CHANNEL_USERNAME}"

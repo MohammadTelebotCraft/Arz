@@ -2,7 +2,6 @@
 Currency converter module for the crypto handler.
 This module handles converting between real currencies.
 """
-
 import logging
 import re
 import time
@@ -10,15 +9,10 @@ from typing import Dict, Any, Tuple, Optional
 from telethon.tl.custom import Button
 from ..currency_converter import CURRENCY_CODES, convert_currency, get_currency_name, get_currency_price_in_toman
 from .crypto_cache import crypto_cache, CRYPTO_INFO
-
-
-
 def format_number(number):
     """Format a number with commas as thousands separator"""
     if isinstance(number, float):
-        # Handle floating point numbers with appropriate precision
         if number >= 1000:
-            # For large numbers, show fewer decimal places
             return f"{number:,.2f}"
         elif number >= 100:
             return f"{number:,.3f}"
@@ -27,10 +21,6 @@ def format_number(number):
         elif number >= 1:
             return f"{number:,.5f}"
         else:
-            # For very small numbers, show more decimal places
             return f"{number:,.8f}"
     else:
-        # For integers, no decimal places
         return f"{number:,}"
-
-

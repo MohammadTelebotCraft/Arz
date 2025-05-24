@@ -1,34 +1,27 @@
 from telethon import events
 from telethon.tl.custom import Button
 from .utils import format_number, format_change
-
 class CurrencyHandler:
     def __init__(self, name, flag, triggers):
         self.name = name
         self.flag = flag
         self.triggers = triggers
-
     async def handle_currency(self, event, client):
         """Handle currency requests"""
         data = event.client.currency_data
         if not data:
             await event.respond('متاسفانه در حال حاضر امکان دریافت اطلاعات نرخ ارز وجود ندارد. ❌')
             return
-
         currencies = data.get('mainCurrencies', {}).get('data', [])
         currency_info = next((c for c in currencies if c['currencyName'] == self.name), None)
-        
         if not currency_info:
             await event.respond(f'اطلاعات {self.name} در حال حاضر در دسترس نیست. ❌')
             return
-
         price = format_number(currency_info['livePrice'])
         change = format_change(currency_info['change'])
         lowest = format_number(currency_info['lowest'])
         highest = format_number(currency_info['highest'])
         time = currency_info['time']
-
-        # Create buttons for displaying information
         buttons = [
             [Button.inline("💰 قیمت فعلی", b'noop'), Button.inline(f"{price} تومان", b'noop')],
             [Button.inline("📊 تغییرات", b'noop'), Button.inline(f"{change}", b'noop')],
@@ -38,6 +31,5 @@ class CurrencyHandler:
             [Button.url("📢 کانال ما", "https://t.me/TelebotCraft")],
             [Button.url("➕ افزودن ربات به گروه", f"https://t.me/{(await client.get_me()).username}?startgroup=true")]
         ]
-
         message = f"{self.flag} نرخ لحظه‌ای {self.name}:"
-        await event.respond(message, buttons=buttons) 
+        await event.respond(message, buttons=buttons)

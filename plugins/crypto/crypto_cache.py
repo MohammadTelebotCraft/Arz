@@ -2,24 +2,18 @@
 Crypto cache module for the currency bot.
 This module handles fetching and caching cryptocurrency data from the Nobitex API.
 """
-
 import time
 import json
 import logging
 import threading
 import requests
 from typing import Dict, Any, Optional, List
-
-# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger('CryptoCache')
-
-# List of all crypto symbols to cache
 POPULAR_CRYPTO_SYMBOLS = [
-    # IRT pairs (Toman)
     'BTCIRT', 'ETHIRT', 'LTCIRT', 'USDTIRT', 'XRPIRT', 'BCHIRT', 'BNBIRT', 'EOSIRT', 'XLMIRT', 'ETCIRT',
     'TRXIRT', 'DOGEIRT', 'UNIIRT', 'DAIIRT', 'LINKIRT', 'DOTIRT', 'AAVEIRT', 'ADAIRT', 'SHIBIRT', 'FTMIRT',
     'MATICIRT', 'AXSIRT', 'MANAIRT', 'SANDIRT', 'AVAXIRT', 'MKRIRT', 'GMTIRT', 'USDCIRT', 'CHZIRT', 'GRTIRT',
@@ -31,8 +25,6 @@ POPULAR_CRYPTO_SYMBOLS = [
     '1INCHIRT', 'RSRIRT', 'RNDRIRT', 'YFIIRT', 'MDTIRT', 'LRCIRT', '1M_PEPEIRT', 'BICOIRT', 'ETHFIIRT', 'APEIRT',
     '1M_NFTIRT', 'ARBIRT', 'DYDXIRT', 'BALIRT', 'TONIRT', 'APTIRT', 'CELRIRT', 'ALGOIRT', 'NEARIRT', 'ZRXIRT',
     'MASKIRT', 'EGALAIRT', 'FLOWIRT', 'OMGIRT', 'WOOIRT', 'ENJIRT', 'JSTIRT',
-    
-    # USDT pairs (Dollar)
     'BTCUSDT', 'ETHUSDT', 'LTCUSDT', 'XRPUSDT', 'BCHUSDT', 'BNBUSDT', 'EOSUSDT', 'XLMUSDT', 'ETCUSDT', 'TRXUSDT',
     'PMNUSDT', 'DOGEUSDT', 'UNIUSDT', 'DAIUSDT', 'LINKUSDT', 'DOTUSDT', 'AAVEUSDT', 'ADAUSDT', 'SHIBUSDT', 'FTMUSDT',
     'MATICUSDT', 'AXSUSDT', 'MANAUSDT', 'SANDUSDT', 'AVAXUSDT', 'MKRUSDT', 'GMTUSDT', 'USDCUSDT', 'BANDUSDT', 'COMPUSDT',
@@ -45,8 +37,6 @@ POPULAR_CRYPTO_SYMBOLS = [
     'SKLUSDT', 'ZRXUSDT', 'SUSHIUSDT', 'FETUSDT', 'ALGOUSDT', '1M_PEPEUSDT', '1B_BABYDOGEUSDT', 'MASKUSDT', '1M_BTTUSDT',
     'STORJUSDT', 'XMRUSDT', 'SNTUSDT', 'FILUSDT', 'ENJUSDT', 'OMGUSDT', 'CHZUSDT', 'DYDXUSDT', 'AGIXUSDT', 'LDOUSDT'
 ]
-
-# Map of crypto symbols to their Persian names and icons
 CRYPTO_INFO = {
     'BTC': {'name': 'بیت کوین', 'icon': '₿'},
     'ETH': {'name': 'اتریوم', 'icon': 'Ξ'},
@@ -158,13 +148,10 @@ CRYPTO_INFO = {
     'OMG': {'name': 'او ام جی', 'icon': 'OMG'},
     'ENJ': {'name': 'انجین کوین', 'icon': 'ENJ'},
 }
-
 class CryptoCache:
     """Cache for cryptocurrency data from Nobitex API"""
-    
     def __init__(self, update_interval: int = 60):
         """Initialize the crypto cache
-        
         Args:
             update_interval: Time between updates in seconds (default: 60)
         """
@@ -176,30 +163,25 @@ class CryptoCache:
         self._running = False
         self._api_all_url = 'https://api.nobitex.ir/v3/orderbook/all'
         self._api_single_url = 'https://api.nobitex.ir/v3/orderbook/'
-    
     def start(self):
         """Start the background update thread"""
         self._running = True
         self._update_thread = threading.Thread(target=self._update_loop, daemon=True)
         self._update_thread.start()
         logger.info("Crypto cache update thread started")
-    
     def stop(self):
         """Stop the background update thread"""
         self._running = False
         if self._update_thread:
             self._update_thread.join()
         logger.info("Crypto cache update thread stopped")
-    
     def _fetch_all_data(self) -> Optional[Dict[str, Any]]:
         """Fetch data for all crypto symbols from the API in a single request
-        
         Returns:
             The API response data or None if the request failed
         """
         try:
-            response = requests.get(self._api_all_url, timeout=30)  # Longer timeout for all data
-            
+            response = requests.get(self._api_all_url, timeout=30)
             if response.status_code == 200:
                 data = response.json()
                 if data.get('status') == 'ok':
@@ -208,25 +190,19 @@ class CryptoCache:
                     logger.warning(f"API returned non-ok status for all data: {data.get('status')}")
             else:
                 logger.warning(f"API request failed for all data with status code: {response.status_code}")
-        
         except Exception as e:
             logger.error(f"Error fetching all data: {str(e)}")
-        
         return None
-    
     def _fetch_single_data(self, symbol: str) -> Optional[Dict[str, Any]]:
         """Fetch data for a specific crypto symbol from the API
-        
         Args:
             symbol: The crypto symbol to fetch (e.g., 'BTCIRT')
-            
         Returns:
             The API response data or None if the request failed
         """
         try:
             url = f"{self._api_single_url}{symbol}"
             response = requests.get(url, timeout=10)
-            
             if response.status_code == 200:
                 data = response.json()
                 if data.get('status') == 'ok':
@@ -235,45 +211,30 @@ class CryptoCache:
                     logger.warning(f"API returned non-ok status for {symbol}: {data.get('status')}")
             else:
                 logger.warning(f"API request failed for {symbol} with status code: {response.status_code}")
-        
         except Exception as e:
             logger.error(f"Error fetching data for {symbol}: {str(e)}")
-        
         return None
-    
     def _update_loop(self):
         """Background thread that updates the cache periodically"""
         while self._running:
             self._update_cache()
             time.sleep(self._update_interval)
-    
     def _update_cache(self):
         """Update the cache with fresh data for all symbols"""
         logger.info("Updating crypto cache...")
-        
-        # Try to fetch all data in a single request
         all_data = self._fetch_all_data()
-        
         if all_data:
-            # Process all data at once
             current_time = time.time()
             with self._lock:
-                # Remove status field from the data
                 all_data.pop('status', None)
-                
-                # Update cache with all data
                 for symbol, data in all_data.items():
                     if symbol in POPULAR_CRYPTO_SYMBOLS or symbol.upper() in POPULAR_CRYPTO_SYMBOLS:
-                        # Store previous price for calculating change
                         prev_price = None
                         if symbol in self._cache and 'lastTradePrice' in self._cache[symbol]:
                             prev_price = self._cache[symbol]['lastTradePrice']
-                        
-                        # Calculate price change if we have previous data
                         price_change = None
                         price_change_percent = None
                         current_price = data.get('lastTradePrice')
-                        
                         if prev_price and current_price:
                             try:
                                 prev_price_float = float(prev_price)
@@ -284,7 +245,6 @@ class CryptoCache:
                             except (ValueError, TypeError):
                                 price_change = None
                                 price_change_percent = None
-                        
                         self._cache[symbol] = {
                             'lastUpdate': data.get('lastUpdate'),
                             'lastTradePrice': current_price,
@@ -295,44 +255,33 @@ class CryptoCache:
                             'bids': data.get('bids', []),
                             'timestamp': current_time
                         }
-                
                 self._last_update = current_time
-            
             logger.info(f"Crypto cache updated successfully with {len(all_data)} symbols")
         else:
-            # Fallback to individual updates if the all endpoint fails
             logger.warning("Failed to fetch all data at once, falling back to individual updates")
             for symbol in POPULAR_CRYPTO_SYMBOLS:
                 try:
                     self._update_cache_for_symbol(symbol)
                 except Exception as e:
                     logger.error(f"Error updating cache for {symbol}: {str(e)}")
-            
             with self._lock:
                 self._last_update = time.time()
-            
             logger.info("Crypto cache updated successfully using individual requests")
-    
     def _update_cache_for_symbol(self, symbol):
         """Update the cache for a specific symbol
-        
         Args:
             symbol: The crypto symbol to update (e.g., 'BTCIRT')
         """
         try:
             data = self._fetch_single_data(symbol)
             if data:
-                # Store previous price for calculating change
                 prev_price = None
                 with self._lock:
                     if symbol in self._cache and 'lastTradePrice' in self._cache[symbol]:
                         prev_price = self._cache[symbol]['lastTradePrice']
-                
-                # Calculate price change if we have previous data
                 price_change = None
                 price_change_percent = None
                 current_price = data.get('lastTradePrice')
-                
                 if prev_price and current_price:
                     try:
                         prev_price_float = float(prev_price)
@@ -343,7 +292,6 @@ class CryptoCache:
                     except (ValueError, TypeError):
                         price_change = None
                         price_change_percent = None
-                
                 with self._lock:
                     self._cache[symbol] = {
                         'lastUpdate': data.get('lastUpdate'),
@@ -359,15 +307,11 @@ class CryptoCache:
                 return True
         except Exception as e:
             logger.error(f"Error updating cache for {symbol}: {str(e)}")
-        
         return False
-    
     def get_data(self, symbol: Optional[str] = None) -> Any:
         """Get cached data for a specific symbol or all symbols
-        
         Args:
             symbol: The crypto symbol to get data for, or None for all data
-            
         Returns:
             The cached data for the specified symbol, or all cached data
         """
@@ -375,37 +319,23 @@ class CryptoCache:
             if symbol:
                 return self._cache.get(symbol)
             return self._cache
-    
     def get_all_symbols(self) -> List[str]:
         """Get a list of all available symbols in the cache
-        
         Returns:
             List of symbol strings
         """
         with self._lock:
             return list(self._cache.keys())
-    
     def get_crypto_info(self, symbol: str) -> Dict[str, str]:
         """Get information about a cryptocurrency by its symbol
-        
         Args:
-            symbol: The crypto symbol (e.g., 'BTC', 'ETH') # This is the base symbol
-            
+            symbol: The crypto symbol (e.g., 'BTC', 'ETH')
         Returns:
             Dictionary with name and icon for the cryptocurrency
         """
-        # The 'symbol' argument IS the base_symbol (e.g., 'BTC', 'ETH').
-        # It should not be split further.
-        # base_symbol_lookup = symbol.split('IRT')[0].split('USDT')[0] # THIS WAS THE BUG
-        
-        # Return the info or a default if not found
-        # Use symbol directly as the key for CRYPTO_INFO
         return CRYPTO_INFO.get(symbol, {'name': symbol, 'icon': symbol})
-    
     @property
     def last_update_time(self) -> float:
         """Get the timestamp of the last update"""
         return self._last_update
-
-# Create a global instance of the cache
 crypto_cache = CryptoCache()

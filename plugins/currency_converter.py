@@ -2,8 +2,6 @@ from telethon import events
 from telethon.tl.custom import Button
 import re
 from .utils import format_number
-
-# Dictionary to convert Persian digits to English digits
 PERSIAN_DIGITS = {
     '۰': '0',
     '۱': '1',
@@ -16,25 +14,11 @@ PERSIAN_DIGITS = {
     '۸': '8',
     '۹': '9',
 }
-
-# Keywords that trigger this handler
 TRIGGERS = ['تبدیل', 'convert', 'تبدیل_ارز', 'currency_convert']
-
-# Regular expression pattern to match conversion requests
-# Format: amount currency to currency
-# Examples: 100 usd to toman, 1000 toman to eur
 CONVERSION_PATTERN = re.compile(r'(\d+(?:\.\d+)?)\s*([a-zA-Z\u0600-\u06FF]+)\s*(?:به|to)\s*([a-zA-Z\u0600-\u06FF]+)', re.IGNORECASE)
-
-# Simple pattern to match just amount and currency
-# Examples: 100 usd, 1000 toman, ۱۰۰ دلار
 SIMPLE_AMOUNT_PATTERN = re.compile(r'(\d+(?:\.\d+)?)\s*([a-zA-Z\u0600-\u06FF]+)', re.IGNORECASE)
-
-# Pattern to identify messages consisting only of numbers, dots, commas, and spaces (English or Persian)
 ONLY_NUMBERS_PATTERN = re.compile(r"^[\d۰-۹\s\.,]+$")
-
-# Currency code mappings (English, Persian, and common abbreviations)
 CURRENCY_CODES = {
-    # Main currencies
     'دلار': 'USD', 'dollar': 'USD', 'usd': 'USD', 'دلار آمریکا': 'USD',
     'یورو': 'EUR', 'euro': 'EUR', 'eur': 'EUR', 'یورو اروپا': 'EUR',
     'پوند': 'GBP', 'pound': 'GBP', 'gbp': 'GBP', 'پوند انگلیس': 'GBP',
@@ -42,8 +26,6 @@ CURRENCY_CODES = {
     'لیر': 'TRY', 'lira': 'TRY', 'try': 'TRY', 'لیر ترکیه': 'TRY',
     'تومان': 'TOMAN', 'toman': 'TOMAN', 'تومن': 'TOMAN', 'irt': 'TOMAN',
     'ریال': 'IRR', 'rial': 'IRR', 'irr': 'IRR',
-    
-    # Additional currencies - Part 1
     'دلار کانادا': 'CAD', 'cad': 'CAD', 'canadian dollar': 'CAD',
     'دلار استرالیا': 'AUD', 'aud': 'AUD', 'australian dollar': 'AUD',
     'یوان': 'CNY', 'yuan': 'CNY', 'cny': 'CNY', 'یوان چین': 'CNY',
@@ -80,8 +62,6 @@ CURRENCY_CODES = {
     'انس نقره': 'XAG', 'silver': 'XAG', 'نقره': 'XAG', 'اونس نقره': 'XAG',
     'انس پلاتین': 'XPT', 'platinum': 'XPT', 'پلاتین': 'XPT', 'اونس پلاتین': 'XPT',
     'انس پالادیوم': 'XPD', 'palladium': 'XPD', 'پالادیوم': 'XPD', 'اونس پالادیوم': 'XPD',
-    
-    # Cryptocurrencies
     'بیت کوین': 'BTC', 'bitcoin': 'BTC', 'btc': 'BTC',
     'اتریوم': 'ETH', 'ethereum': 'ETH', 'eth': 'ETH',
     'تتر': 'USDT', 'tether': 'USDT', 'usdt': 'USDT',
@@ -101,8 +81,6 @@ CURRENCY_CODES = {
     'مونرو': 'XMR', 'monero': 'XMR', 'xmr': 'XMR',
     'اتریوم کلاسیک': 'ETC', 'ethereum classic': 'ETC', 'etc': 'ETC',
     'فایل کوین': 'FIL', 'filecoin': 'FIL', 'fil': 'FIL',
-    
-    # Additional currencies - Part 2
     'بیر اتیوپی': 'ETB', 'etb': 'ETB', 'ethiopian birr': 'ETB',
     'فرانک گینه': 'GNF', 'gnf': 'GNF', 'guinean franc': 'GNF',
     'گواتزال گواتمالا': 'GTQ', 'gtq': 'GTQ', 'guatemalan quetzal': 'GTQ',
@@ -215,107 +193,67 @@ CURRENCY_CODES = {
     'دوبرا سائوتومه و پرنسیپ': 'STN', 'stn': 'STN', 'são tomé and príncipe dobra': 'STN',
     'دلار کارائیب شرقی': 'XCD', 'xcd': 'XCD', 'east caribbean dollar': 'XCD'
 }
-
 async def handle_currency(event, client):
     """Handle currency conversion requests"""
-    # Get the message text
     message_text = event.message.text.strip()
-
-    # If the message consists only of numbers (and formatting chars), do nothing.
     if ONLY_NUMBERS_PATTERN.fullmatch(message_text):
-        # Check if it might still contain a trigger word (e.g. "123 convert")
-        # This is a safeguard. If it's purely numbers, the patterns below shouldn't match anyway.
         if not any(trigger.lower() in message_text.lower() for trigger in TRIGGERS):
-             raise events.StopPropagation # MODIFIED: Stop other handlers
-
-    # Direct check for Pakistani Rupee to ensure it's handled correctly
+             raise events.StopPropagation
     if 'روپیه پاکستان' in message_text.lower() or 'پاکستان روپیه' in message_text.lower():
-        # Extract the amount using regex
         amount_match = re.search(r'(\d[\d,\s\.]*|[۰-۹][۰-۹,\s\.]*)', message_text)
         if amount_match:
             try:
                 amount_str = amount_match.group(1)
-                # Convert Persian digits to English
                 amount_str = ''.join([str(PERSIAN_DIGITS.get(c, c)) for c in amount_str])
-                # Remove commas and spaces
                 amount_str = amount_str.replace(',', '').replace(' ', '')
                 amount = float(amount_str)
-                
-                # Get currency data
                 data = event.client.currency_data
                 if not data:
                     await event.respond('متاسفانه در حال حاضر امکان دریافت اطلاعات نرخ ارز وجود ندارد. ❌')
                     return
-                
-                # Use the fallback rate for Pakistani Rupee
-                pkr_rate = 0.15  # This is the fallback rate we defined
+                pkr_rate = 0.15
                 converted_amount = amount * pkr_rate
-                
-                # Format the response
                 formatted_amount = format_number(amount)
                 formatted_result = format_number(converted_amount)
-                
                 message = f"""💱 تبدیل ارز
-
 {formatted_amount} روپیه پاکستان = {formatted_result} تومان
-
 📊 نرخ تبدیل: 1 روپیه پاکستان = {format_number(pkr_rate)} تومان
 ⏱ آخرین بروزرسانی: نامشخص"""
-                
                 await event.respond(message)
                 return
             except ValueError:
                 pass
-    
-    # Try to parse conversion request
     match = CONVERSION_PATTERN.search(message_text)
     simple_match = None
-    
     if not match:
-        # Try to match simple pattern (just amount and currency)
         simple_match = SIMPLE_AMOUNT_PATTERN.search(message_text)
         if not simple_match:
-            # If we're here because of a trigger word, show help
             if any(trigger in message_text.lower() for trigger in TRIGGERS):
                 await show_conversion_help(event, client)
-            # Otherwise, don't respond - it's not a currency conversion request
             return
-    
-    # Handle simple pattern (convert to Toman automatically)
     if simple_match:
         amount_str, from_currency = simple_match.groups()
-        to_currency = 'تومان'  # Default target currency is Toman
+        to_currency = 'تومان'
     else:
-        # Extract conversion parameters from full pattern
         amount_str, from_currency, to_currency = match.groups()
-    
     try:
         amount = float(amount_str)
-        
-        # Add a limit to prevent extremely large numbers
-        MAX_AMOUNT = 1000000000  # 1 billion
+        MAX_AMOUNT = 1000000000
         if amount > MAX_AMOUNT:
             await event.respond(f'❌ مقدار وارد شده بسیار بزرگ است. لطفاً عددی کمتر از {format_number(MAX_AMOUNT)} وارد کنید.')
             return
     except ValueError:
         await event.respond('❌ مقدار وارد شده معتبر نیست. لطفاً یک عدد معتبر وارد کنید.')
         return
-    
-    # Normalize currency codes
     from_currency = from_currency.lower().strip()
     to_currency = to_currency.lower().strip()
-    
-    # Add specific phrases for exact matching
     EXACT_CURRENCY_PHRASES = {
-        # Pakistani Rupee (highest priority to avoid confusion)
         'روپیه پاکستان': 'PKR',
         'پاکستان روپیه': 'PKR',
         'پاکستانی روپیه': 'PKR',
         'pakistani rupee': 'PKR',
         'pakistan rupee': 'PKR',
         'pkr': 'PKR',
-        
-        # Indian Rupee
         'روپیه هند': 'INR',
         'هند روپیه': 'INR',
         'هندی روپیه': 'INR',
@@ -412,30 +350,20 @@ async def handle_currency(event, client):
         'تاکا بنگلادش': 'BDT',
         'bangladeshi taka': 'BDT'
     }
-    
-    # First check for exact phrases - these take highest priority
     from_code = None
     to_code = None
-    
     for phrase, code in EXACT_CURRENCY_PHRASES.items():
         if phrase in from_currency:
             from_code = code
             break
-    
     for phrase, code in EXACT_CURRENCY_PHRASES.items():
         if phrase in to_currency:
             to_code = code
             break
-    
-    # If exact phrases weren't found, try the CURRENCY_CODES dictionary
     if from_code is None:
         from_code = CURRENCY_CODES.get(from_currency)
-    
     if to_code is None:
         to_code = CURRENCY_CODES.get(to_currency)
-    
-    # Special handling for specific currencies that might be confused
-    # Dollars
     if 'دلار' in from_currency or 'dollar' in from_currency:
         if 'کانادا' in from_currency or 'canada' in from_currency:
             from_code = 'CAD'
@@ -466,9 +394,7 @@ async def handle_currency(event, client):
         elif 'باربادوس' in from_currency or 'barbados' in from_currency:
             from_code = 'BBD'
         else:
-            from_code = 'USD'  # Default to USD if no specific country
-    
-    # Rupees
+            from_code = 'USD'
     if 'روپیه' in from_currency or 'rupee' in from_currency:
         if 'پاکستان' in from_currency or 'pakistan' in from_currency:
             from_code = 'PKR'
@@ -484,8 +410,6 @@ async def handle_currency(event, client):
             from_code = 'MUR'
         elif 'سیشل' in from_currency or 'seychelles' in from_currency:
             from_code = 'SCR'
-    
-    # Dinars
     if 'دینار' in from_currency or 'dinar' in from_currency:
         if 'کویت' in from_currency or 'kuwait' in from_currency:
             from_code = 'KWD'
@@ -503,8 +427,6 @@ async def handle_currency(event, client):
             from_code = 'TND'
         elif 'صربستان' in from_currency or 'serbia' in from_currency:
             from_code = 'RSD'
-    
-    # Riyals
     if 'ریال' in from_currency or 'riyal' in from_currency:
         if 'سعودی' in from_currency or 'saudi' in from_currency:
             from_code = 'SAR'
@@ -516,15 +438,11 @@ async def handle_currency(event, client):
             from_code = 'YER'
         elif 'ایران' in from_currency or 'iran' in from_currency:
             from_code = 'IRR'
-    
-    # Dirhams
     if 'درهم' in from_currency or 'dirham' in from_currency:
         if 'امارات' in from_currency or 'uae' in from_currency or 'emirates' in from_currency:
             from_code = 'AED'
         elif 'مراکش' in from_currency or 'morocco' in from_currency:
             from_code = 'MAD'
-    
-    # Pounds
     if 'پوند' in from_currency or 'pound' in from_currency:
         if 'انگلیس' in from_currency or 'بریتانیا' in from_currency or 'uk' in from_currency or 'british' in from_currency or 'sterling' in from_currency:
             from_code = 'GBP'
@@ -536,8 +454,6 @@ async def handle_currency(event, client):
             from_code = 'LBP'
         elif 'سوریه' in from_currency or 'syria' in from_currency:
             from_code = 'SYP'
-    
-    # Francs
     if 'فرانک' in from_currency or 'franc' in from_currency:
         if 'سوئیس' in from_currency or 'swiss' in from_currency:
             from_code = 'CHF'
@@ -547,8 +463,6 @@ async def handle_currency(event, client):
             from_code = 'DJF'
         elif 'بوروندی' in from_currency or 'burundi' in from_currency:
             from_code = 'BIF'
-    
-    # Pesos
     if 'پزو' in from_currency or 'peso' in from_currency:
         if 'مکزیک' in from_currency or 'mexico' in from_currency:
             from_code = 'MXN'
@@ -566,9 +480,6 @@ async def handle_currency(event, client):
             from_code = 'DOP'
         elif 'اروگوئه' in from_currency or 'uruguay' in from_currency:
             from_code = 'UYU'
-    
-    # Same for target currency
-    # Dollars
     if 'دلار' in to_currency or 'dollar' in to_currency:
         if 'کانادا' in to_currency or 'canada' in to_currency:
             to_code = 'CAD'
@@ -599,9 +510,7 @@ async def handle_currency(event, client):
         elif 'باربادوس' in to_currency or 'barbados' in to_currency:
             to_code = 'BBD'
         else:
-            to_code = 'USD'  # Default to USD if no specific country
-    
-    # Rupees
+            to_code = 'USD'
     if 'روپیه' in to_currency or 'rupee' in to_currency:
         if 'پاکستان' in to_currency or 'pakistan' in to_currency:
             to_code = 'PKR'
@@ -617,8 +526,6 @@ async def handle_currency(event, client):
             to_code = 'MUR'
         elif 'سیشل' in to_currency or 'seychelles' in to_currency:
             to_code = 'SCR'
-    
-    # Dinars
     if 'دینار' in to_currency or 'dinar' in to_currency:
         if 'کویت' in to_currency or 'kuwait' in to_currency:
             to_code = 'KWD'
@@ -636,8 +543,6 @@ async def handle_currency(event, client):
             to_code = 'TND'
         elif 'صربستان' in to_currency or 'serbia' in to_currency:
             to_code = 'RSD'
-    
-    # Riyals
     if 'ریال' in to_currency or 'riyal' in to_currency:
         if 'سعودی' in to_currency or 'saudi' in to_currency:
             to_code = 'SAR'
@@ -649,15 +554,11 @@ async def handle_currency(event, client):
             to_code = 'YER'
         elif 'ایران' in to_currency or 'iran' in to_currency:
             to_code = 'IRR'
-    
-    # Dirhams
     if 'درهم' in to_currency or 'dirham' in to_currency:
         if 'امارات' in to_currency or 'uae' in to_currency or 'emirates' in to_currency:
             to_code = 'AED'
         elif 'مراکش' in to_currency or 'morocco' in to_currency:
             to_code = 'MAD'
-    
-    # Pounds
     if 'پوند' in to_currency or 'pound' in to_currency:
         if 'انگلیس' in to_currency or 'بریتانیا' in to_currency or 'uk' in to_currency or 'british' in to_currency or 'sterling' in to_currency:
             to_code = 'GBP'
@@ -669,8 +570,6 @@ async def handle_currency(event, client):
             to_code = 'LBP'
         elif 'سوریه' in to_currency or 'syria' in to_currency:
             to_code = 'SYP'
-    
-    # Francs
     if 'فرانک' in to_currency or 'franc' in to_currency:
         if 'سوئیس' in to_currency or 'swiss' in to_currency:
             to_code = 'CHF'
@@ -680,8 +579,6 @@ async def handle_currency(event, client):
             to_code = 'DJF'
         elif 'بوروندی' in to_currency or 'burundi' in to_currency:
             to_code = 'BIF'
-    
-    # Pesos
     if 'پزو' in to_currency or 'peso' in to_currency:
         if 'مکزیک' in to_currency or 'mexico' in to_currency:
             to_code = 'MXN'
@@ -699,49 +596,30 @@ async def handle_currency(event, client):
             to_code = 'DOP'
         elif 'اروگوئه' in to_currency or 'uruguay' in to_currency:
             to_code = 'UYU'
-    
     if not from_code:
-
         return
-    
     if not to_code:
-
         return
-    
-    # Get currency data
     data = event.client.currency_data
     if not data:
         await event.respond('متاسفانه در حال حاضر امکان دریافت اطلاعات نرخ ارز وجود ندارد. ❌')
         return
-    
-    # Perform conversion
     result = await convert_currency(amount, from_code, to_code, data)
-    
-    # Check if we got an error instead of conversion result
     if isinstance(result, dict) and 'error' in result:
-        # Silently ignore non-existent currencies
         error_type = result['error']
         if error_type in ['both_currencies_not_found', 'from_currency_not_found', 'to_currency_not_found']:
-            # Don't respond - just ignore the request
             return
         else:
-            # For other types of errors, still show a message
             await event.respond('❌ خطا در تبدیل ارز. لطفاً دوباره تلاش کنید.')
             return
-    
     if not result:
         await event.respond('❌ خطا در تبدیل ارز. لطفاً دوباره تلاش کنید.')
         return
-    
     converted_amount, from_name, to_name, from_price, to_price = result
-    
-    # Format the response - round to integers for whole numbers or 2 decimal places for fractions
-    # Check if it's a whole number by comparing with its integer value
     if converted_amount == int(converted_amount):
         converted_amount = int(converted_amount)
     else:
         converted_amount = round(converted_amount, 2)
-        
     if to_code == 'TOMAN':
         formatted_result = format_number(converted_amount)
         result_text = f"{formatted_result} تومان"
@@ -751,31 +629,18 @@ async def handle_currency(event, client):
     else:
         formatted_result = format_number(converted_amount)
         result_text = f"{formatted_result} {to_name}"
-    
-    # Get the actual exchange rate directly from the result of convert_currency
-    # from_price and to_price are the actual prices in Toman
     if to_code == 'TOMAN':
-        # For conversions to Toman, show the price of the source currency in Toman
         exchange_rate = from_price
     elif from_code == 'TOMAN':
-        # For conversions from Toman, show how many units of target currency per Toman
         exchange_rate = 1/to_price
     else:
-        # For other currency pairs, calculate the direct exchange rate
         exchange_rate = from_price / to_price
-    
-    # Round to 2 decimal places for most currencies, but use more for very small values
     if exchange_rate >= 0.01:
         exchange_rate = round(exchange_rate, 2)
     else:
         exchange_rate = round(exchange_rate, 6)
-    
-    # Create a clean, elegant message with the correct exchange rate display
     input_amount = int(amount) if amount == int(amount) else round(amount, 2)
-    
-    # For USD to TOMAN conversions, directly get the dollar price from the cache
     if from_code == 'USD' and to_code == 'TOMAN':
-        # Find dollar in main currencies
         main_currencies = data.get('mainCurrencies', {}).get('data', [])
         dollar_price = None
         for currency in main_currencies:
@@ -784,198 +649,140 @@ async def handle_currency(event, client):
                 if isinstance(dollar_price, str):
                     dollar_price = float(dollar_price.replace(',', ''))
                 break
-        
         if dollar_price is not None:
             rate_display = f"1 {from_name} = {format_number(dollar_price)} {to_name}"
         else:
             rate_display = f"1 {from_name} = {format_number(exchange_rate)} {to_name}"
     else:
-        # For other conversions, use the calculated exchange rate
         rate_display = f"1 {from_name} = {format_number(exchange_rate)} {to_name}"
-    
     message = f"""💱 <b>تبدیل ارز</b>
-
 <b>{format_number(input_amount)} {from_name}</b> = <b>{result_text}</b>
-
 📊 نرخ تبدیل: <b>{rate_display}</b>
 ⏱ آخرین بروزرسانی: {data.get('lastUpdate', 'نامشخص')}"""
-    
-    # Create buttons for displaying information
     buttons = [
         [Button.url("📢 کانال ما", "https://t.me/TelebotCraft")],
         [Button.url("➕ افزودن ربات به گروه", f"https://t.me/{(await client.get_me()).username}?startgroup=true")]
     ]
-    
-    # Send with parse_mode to enable HTML formatting
     await event.respond(message, buttons=buttons, parse_mode='html')
-
 async def convert_currency(amount, from_code, to_code, data):
     """Convert between currencies using the latest exchange rates"""
-    # Special case: if both currencies are the same
     if from_code == to_code:
         return amount, get_currency_name(from_code), get_currency_name(to_code), 1, 1
-    
-    # Get currency rates in Toman
     from_price_toman = get_currency_price_in_toman(from_code, data)
     to_price_toman = get_currency_price_in_toman(to_code, data)
-    
-    # Check if we have rates for both currencies
     if from_price_toman is None and to_price_toman is None:
         return {'error': 'both_currencies_not_found', 'from_code': from_code, 'to_code': to_code}
     elif from_price_toman is None:
         return {'error': 'from_currency_not_found', 'currency': from_code}
     elif to_price_toman is None:
         return {'error': 'to_currency_not_found', 'currency': to_code}
-    
-    # Special case: if one of the currencies is Toman
     if from_code == 'TOMAN':
         converted_amount = amount / to_price_toman
-        # For Toman to other currency, the exchange rate is the price of the target currency
         return converted_amount, 'تومان', get_currency_name(to_code), 1, to_price_toman
-    
     if to_code == 'TOMAN':
         converted_amount = amount * from_price_toman
-        # For other currency to Toman, the exchange rate is the price of the source currency
         return converted_amount, get_currency_name(from_code), 'تومان', from_price_toman, 1
-    
-    # Convert through Toman
     toman_amount = amount * from_price_toman
     converted_amount = toman_amount / to_price_toman
-    
-    # For currency to currency, calculate the direct exchange rate
     direct_rate = from_price_toman / to_price_toman
-    
     return converted_amount, get_currency_name(from_code), get_currency_name(to_code), from_price_toman, to_price_toman
-
 def get_currency_price_in_toman(currency_code, data):
     """Get the price of a currency in Toman"""
     if currency_code == 'TOMAN':
         return 1.0
-    
     if currency_code == 'IRR':
-        return 0.1  # 1 Toman = 10 Rials
-    
-    # For cryptocurrencies and precious metals, use USD as a fallback if not directly available
+        return 0.1
     crypto_and_metals = ['BTC', 'ETH', 'USDT', 'BNB', 'ADA', 'XRP', 'DOGE', 'DOT', 'SOL', 'SHIB', 'LTC', 'XAU', 'XAG', 'XPT', 'XPD']
-    
-    # Search in main currencies
     main_currencies = data.get('mainCurrencies', {}).get('data', [])
     for currency in main_currencies:
         if currency_matches_code(currency, currency_code):
             price = currency.get('livePrice')
-            # Convert to float if it's a string
             if isinstance(price, str):
                 try:
-                    # Remove any commas and convert to float
                     price = float(price.replace(',', ''))
                     return price
                 except ValueError:
                     continue
             elif price is not None:
                 return price
-    
-    # Search in minor currencies
     minor_currencies = data.get('minorCurrencies', {}).get('data', [])
     for currency in minor_currencies:
         if currency_matches_code(currency, currency_code):
             price = currency.get('livePrice')
-            # Convert to float if it's a string
             if isinstance(price, str):
                 try:
-                    # Remove any commas and convert to float
                     price = float(price.replace(',', ''))
                     return price
                 except ValueError:
                     continue
             elif price is not None:
                 return price
-    
-    # Fallback mechanism for currencies not found in the API data
-    # Use approximate exchange rates for common currencies
-    # These are rough estimates and should be updated periodically
     fallback_rates = {
-        # Middle Eastern and Asian currencies
-        'AFN': 0.5,      # Afghan Afghani
-        'PKR': 0.15,     # Pakistani Rupee
-        'INR': 0.5,      # Indian Rupee
-        'BDT': 0.4,      # Bangladeshi Taka
-        'LKR': 0.13,     # Sri Lankan Rupee
-        'NPR': 0.3,      # Nepalese Rupee
-        'BTN': 0.5,      # Bhutanese Ngultrum
-        'MVR': 2.7,      # Maldivian Rufiyaa
-        'IDR': 0.003,    # Indonesian Rupiah
-        'MYR': 9.0,      # Malaysian Ringgit
-        'SGD': 31.0,     # Singapore Dollar
-        'BND': 31.0,     # Brunei Dollar
-        'PHP': 0.75,     # Philippine Peso
-        'MMK': 0.02,     # Myanmar Kyat
-        'LAK': 0.002,    # Lao Kip
-        'KHR': 0.01,     # Cambodian Riel
-        'VND': 0.002,    # Vietnamese Dong
-        'MNT': 0.01,     # Mongolian Tugrik
-        
-        # African currencies
-        'EGP': 1.3,      # Egyptian Pound
-        'DZD': 0.3,      # Algerian Dinar
-        'MAD': 4.2,      # Moroccan Dirham
-        'TND': 13.5,     # Tunisian Dinar
-        'LYD': 8.5,      # Libyan Dinar
-        'SDG': 0.07,     # Sudanese Pound
-        'ETB': 0.75,     # Ethiopian Birr
-        'KES': 0.32,     # Kenyan Shilling
-        'UGX': 0.01,     # Ugandan Shilling
-        'TZS': 0.02,     # Tanzanian Shilling
-        'RWF': 0.04,     # Rwandan Franc
-        'BIF': 0.02,     # Burundian Franc
-        'SOS': 0.07,     # Somali Shilling
-        'DJF': 0.23,     # Djiboutian Franc
-        'GHS': 3.5,      # Ghanaian Cedi
-        'NGN': 0.28,     # Nigerian Naira
-        'ZAR': 2.3,      # South African Rand
-        
-        # Latin American currencies
-        'BRL': 7.5,      # Brazilian Real
-        'MXN': 1.8,      # Mexican Peso
-        'ARS': 0.6,      # Argentine Peso
-        'CLP': 0.5,      # Chilean Peso
-        'COP': 0.1,      # Colombian Peso
-        'PEN': 1.1,      # Peruvian Sol
-        
-        # Cryptocurrencies
-        'BTC': 1200000000,  # Bitcoin
-        'ETH': 80000000,    # Ethereum
-        'USDT': 42000,      # Tether (approximately USD)
-        'BNB': 15000000,    # Binance Coin
-        'XRP': 20000,       # Ripple
-        'ADA': 15000,       # Cardano
-        'SOL': 3000000,     # Solana
-        'DOGE': 5000,       # Dogecoin
-        'DOT': 250000,      # Polkadot
-        
-        # Precious metals (per ounce)
-        'XAU': 70000000,    # Gold
-        'XAG': 800000,      # Silver
-        'XPT': 35000000,    # Platinum
-        'XPD': 40000000,    # Palladium
+        'AFN': 0.5,
+        'PKR': 0.15,
+        'INR': 0.5,
+        'BDT': 0.4,
+        'LKR': 0.13,
+        'NPR': 0.3,
+        'BTN': 0.5,
+        'MVR': 2.7,
+        'IDR': 0.003,
+        'MYR': 9.0,
+        'SGD': 31.0,
+        'BND': 31.0,
+        'PHP': 0.75,
+        'MMK': 0.02,
+        'LAK': 0.002,
+        'KHR': 0.01,
+        'VND': 0.002,
+        'MNT': 0.01,
+        'EGP': 1.3,
+        'DZD': 0.3,
+        'MAD': 4.2,
+        'TND': 13.5,
+        'LYD': 8.5,
+        'SDG': 0.07,
+        'ETB': 0.75,
+        'KES': 0.32,
+        'UGX': 0.01,
+        'TZS': 0.02,
+        'RWF': 0.04,
+        'BIF': 0.02,
+        'SOS': 0.07,
+        'DJF': 0.23,
+        'GHS': 3.5,
+        'NGN': 0.28,
+        'ZAR': 2.3,
+        'BRL': 7.5,
+        'MXN': 1.8,
+        'ARS': 0.6,
+        'CLP': 0.5,
+        'COP': 0.1,
+        'PEN': 1.1,
+        'BTC': 1200000000,
+        'ETH': 80000000,
+        'USDT': 42000,
+        'BNB': 15000000,
+        'XRP': 20000,
+        'ADA': 15000,
+        'SOL': 3000000,
+        'DOGE': 5000,
+        'DOT': 250000,
+        'XAU': 70000000,
+        'XAG': 800000,
+        'XPT': 35000000,
+        'XPD': 40000000,
     }
-    
     if currency_code in fallback_rates:
         return fallback_rates[currency_code]
-    
-    # For debugging purposes
     print(f"Currency not found: {currency_code}")
     return None
-
 def currency_matches_code(currency_data, code):
     """Check if the currency data matches the given code"""
     name = currency_data.get('currencyName', '').lower()
     symbol = currency_data.get('currencySymbol', '').lower()
-    
-    # Direct code match if available
     if currency_data.get('currencyCode', '').upper() == code:
         return True
-    
-    # Map currency names to codes for comparison
     if code == 'USD' and ('دلار' in name or 'dollar' in name or symbol == '$'):
         return True
     elif code == 'EUR' and ('یورو' in name or 'euro' in name or symbol == '€'):
@@ -1010,15 +817,10 @@ def currency_matches_code(currency_data, code):
         return True
     elif code == 'KWD' and ('دینار کویت' in name or 'kuwaiti dinar' in name or 'kuwait' in name):
         return True
-    
-    # Add more mappings as needed
-    
     return False
-
 def get_currency_name(code):
     """Get the display name for a currency code"""
     currency_names = {
-        # Major currencies
         'USD': 'دلار',
         'EUR': 'یورو',
         'GBP': 'پوند',
@@ -1035,8 +837,6 @@ def get_currency_name(code):
         'RUB': 'روبل روسیه',
         'INR': 'روپیه هند',
         'KRW': 'وون کره جنوبی',
-        
-        # Middle Eastern currencies
         'SAR': 'ریال سعودی',
         'QAR': 'ریال قطر',
         'OMR': 'ریال عمان',
@@ -1049,8 +849,6 @@ def get_currency_name(code):
         'YER': 'ریال یمن',
         'AFN': 'افغانی',
         'PKR': 'روپیه پاکستان',
-        
-        # Asian currencies
         'BDT': 'تاکا بنگلادش',
         'LKR': 'روپیه سریلانکا',
         'NPR': 'روپیه نپال',
@@ -1060,8 +858,6 @@ def get_currency_name(code):
         'THB': 'بات تایلند',
         'VND': 'دونگ ویتنام',
         'PHP': 'پزوی فیلیپین',
-        
-        # African currencies
         'EGP': 'پوند مصر',
         'ZAR': 'رند آفریقای جنوبی',
         'DZD': 'دینار الجزایر',
@@ -1069,16 +865,12 @@ def get_currency_name(code):
         'TND': 'دینار تونس',
         'NGN': 'نایرا نیجریه',
         'GHS': 'سدی غنا',
-        
-        # Latin American currencies
         'BRL': 'رئال برزیل',
         'MXN': 'پزوی مکزیک',
         'ARS': 'پزوی آرژانتین',
         'CLP': 'پزوی شیلی',
         'COP': 'پزوی کلمبیا',
         'PEN': 'سول پرو',
-        
-        # Cryptocurrencies
         'BTC': 'بیت کوین',
         'ETH': 'اتریوم',
         'USDT': 'تتر',
@@ -1090,34 +882,26 @@ def get_currency_name(code):
         'SOL': 'سولانا',
         'SHIB': 'شیبا اینو',
         'LTC': 'لایت کوین',
-        
-        # Precious metals
         'XAU': 'انس طلا',
         'XAG': 'انس نقره',
         'XPT': 'انس پلاتین',
         'XPD': 'انس پالادیوم'
     }
-    
     return currency_names.get(code, code)
-
 async def show_conversion_help(event, client):
     """Show help message for currency conversion"""
     help_text = """
 💱 راهنمای تبدیل ارز:
-
 برای تبدیل به تومان، کافیست مقدار و نام ارز را بنویسید:
 • `100 دلار`
 • `50 usd`
 • `۱۰۰ یورو`
-
 برای تبدیل بین دو ارز، از فرمت زیر استفاده کنید:
 `مقدار ارز_مبدا به ارز_مقصد`
-
 مثال‌ها:
 • `100 دلار به یورو`
 • `500 تومان به یورو`
 • `50 usd to eur`
-
 ارزهای پشتیبانی شده:
 • دلار (USD)
 • یورو (EUR)
@@ -1128,10 +912,8 @@ async def show_conversion_help(event, client):
 • ریال (IRR)
 و سایر ارزهای موجود در ربات
     """
-    
     buttons = [
         [Button.inline("🏠 بازگشت به خانه", b'home')],
         [Button.url("📢 کانال ما", "https://t.me/TelebotCraft")]
     ]
-    
     await event.respond(help_text, buttons=buttons)
